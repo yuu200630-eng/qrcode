@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#e8f7e9">
+<title>森林 QR Code 產生器</title>
+<style>
+:root{
+  --canvas:#e8f7e9;--paper:#fff;--powder:#d2efd8;--powder-soft:#f7fff6;
+  --sky:#57b9d8;--sky-soft:#e2f6fc;--indigo:#2f699e;--primary:#216b45;
+  --primary-dark:#154a32;--primary-soft:#ddf3e5;--green:#2f806d;
+  --amber:#805800;--amber-soft:#fff0bd;--red:#b6403b;--red-soft:#fde5e3;
+  --orange:#e87936;--yellow:#f5c84c;--ink:#293d32;--soft-ink:#4f6557;
+  --muted:#718276;--line:#cfe0d3;--glass:rgba(255,255,255,.86);
+  --shadow:0 22px 60px rgba(36,90,60,.16);--shadow-soft:0 12px 28px rgba(36,90,60,.11);
+  --radius-xl:34px;--radius-lg:26px;--radius-md:18px;
+}
+*{box-sizing:border-box}
+input,select,textarea{max-width:100%}
+body{
+  margin:0;min-height:100vh;color:var(--ink);
+  font-family:"Microsoft JhengHei","Noto Sans TC",system-ui,sans-serif;
+  background:
+    radial-gradient(circle at 8% 10%,rgba(87,185,216,.25),transparent 25%),
+    radial-gradient(circle at 92% 12%,rgba(245,200,76,.28),transparent 27%),
+    radial-gradient(circle at 52% 96%,rgba(33,107,69,.15),transparent 32%),
+    linear-gradient(135deg,#dff3e3 0%,#f7fff6 48%,#e6f6fb 100%);
+  background-attachment:fixed;
+}
+button,input{font:inherit}
+button{cursor:pointer}
+button:focus-visible,input:focus-visible,a:focus-visible{outline:3px solid rgba(33,107,69,.35);outline-offset:3px}
+.container{width:min(1120px,calc(100% - 30px));margin:auto;padding:26px 0 54px}
+.topbar{
+  display:flex;align-items:center;justify-content:space-between;gap:14px;
+  padding:13px 18px;margin-bottom:22px;border:2px solid rgba(255,255,255,.9);
+  border-radius:999px;background:var(--glass);box-shadow:var(--shadow-soft);backdrop-filter:blur(16px)
+}
+.brand{display:flex;align-items:center;gap:11px;font-weight:950;letter-spacing:.03em}
+.logo{width:42px;height:42px;display:grid;place-items:center;border-radius:15px;color:#fff;
+  background:linear-gradient(135deg,var(--primary-dark),var(--primary));box-shadow:0 10px 22px #216b4540}
+.nav{display:flex;gap:8px;color:var(--soft-ink);font-size:14px;font-weight:800}
+.nav a{color:inherit;text-decoration:none;padding:9px 12px;border-radius:99px}
+.nav a:hover{background:var(--amber-soft);color:var(--primary)}
+.hero{display:grid;grid-template-columns:1.05fr .95fr;gap:20px;margin-bottom:22px}
+.hero-card{
+  min-height:300px;position:relative;overflow:hidden;padding:clamp(25px,4vw,46px);
+  border:2px solid #ffffffeb;border-radius:var(--radius-xl);box-shadow:var(--shadow);
+  background:linear-gradient(135deg,#ffffffed,#ffffffa8),linear-gradient(135deg,#216b4528,#57b9d83b,#f5c84c30)
+}
+.hero-card:before{content:"";position:absolute;width:180px;height:180px;right:-55px;top:-65px;border-radius:50%;
+  background:linear-gradient(135deg,var(--indigo),var(--primary));opacity:.72}
+.hero-card:after{content:"";position:absolute;width:120px;height:120px;left:-35px;bottom:-48px;border-radius:50%;
+  background:linear-gradient(135deg,var(--green-soft),var(--sky));opacity:.8}
+.hero-content{position:relative;z-index:1;max-width:610px}
+.eyebrow{display:inline-flex;padding:8px 13px;border-radius:99px;background:var(--primary-soft);color:var(--primary-dark);
+  font-size:13px;font-weight:950;letter-spacing:.04em;margin-bottom:16px}
+h1{font-size:clamp(34px,5vw,58px);line-height:1.14;letter-spacing:.02em;margin:0}
+.accent{background:linear-gradient(90deg,var(--primary-dark),var(--primary),var(--orange));
+  -webkit-background-clip:text;background-clip:text;color:transparent}
+.hero p{font-size:16px;line-height:1.9;color:var(--soft-ink);margin:16px 0 0}
+.hero-side{display:grid;gap:14px}
+.info-card{padding:22px;border:1px solid #ffffffdf;border-radius:var(--radius-xl);background:var(--glass);box-shadow:var(--shadow-soft)}
+.info-card h2{font-size:21px;margin:0 0 8px}
+.info-card p{margin:0;color:var(--soft-ink);line-height:1.8;font-size:14px}
+.tip{display:flex;gap:12px;align-items:center;padding:12px;border:1px solid var(--line);border-radius:17px;background:#ffffffb8;margin-top:12px}
+.tip-icon{width:40px;height:40px;flex:0 0 40px;border-radius:14px;display:grid;place-items:center;background:var(--sky-soft);font-size:20px}
+.section{padding:25px;margin-bottom:22px;border:2px solid #ffffffeb;border-radius:var(--radius-xl);
+  background:var(--glass);box-shadow:var(--shadow-soft);backdrop-filter:blur(16px)}
+.section-head{display:flex;justify-content:space-between;align-items:end;gap:12px;margin-bottom:18px}
+.section h2{font-size:25px;margin:0;letter-spacing:.02em}
+.section-desc{margin:6px 0 0;color:var(--soft-ink);line-height:1.7;font-size:14px}
+.workspace{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(270px,.9fr);gap:18px}
+.form-panel,.preview-panel{min-width:0;padding:20px;border-radius:var(--radius-lg);background:#ffffffd9;border:1px solid #ffffff}
+.field-label{display:block;font-weight:900;margin-bottom:9px}
+.url-input{width:100%;min-height:54px;padding:13px 15px;border:1.5px solid var(--line);border-radius:16px;
+  color:var(--ink);background:#fff;font-size:16px}
+.url-input:focus{border-color:var(--primary);outline:3px solid #216b451c}
+.hint{font-size:13px;color:var(--muted);line-height:1.7;margin:8px 0 0}
+.actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:17px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:46px;padding:12px 18px;
+  border:0;border-radius:99px;color:#fff;font-weight:900;background:linear-gradient(135deg,var(--primary),var(--primary-dark));
+  box-shadow:0 12px 23px #216b4530;transition:transform .18s,filter .18s}
+.btn:hover{transform:translateY(-2px);filter:brightness(1.06)}
+.btn.secondary{color:var(--primary-dark);background:var(--primary-soft);box-shadow:none;border:1px solid #216b4520}
+.btn:disabled{opacity:.45;cursor:not-allowed;transform:none}
+.message{display:none;margin-top:13px;padding:12px 14px;border-radius:15px;line-height:1.65;font-size:14px}
+.message.error{display:block;color:var(--red);background:var(--red-soft);border:1px solid #b6403b30}
+.message.success{display:block;color:var(--primary-dark);background:var(--primary-soft);border:1px solid #216b4525}
+.preview-panel{display:flex;flex-direction:column;align-items:center;text-align:center;background:linear-gradient(145deg,#f7fff6,#eaf7ef)}
+.preview-title{font-weight:950;font-size:18px;margin:0 0 5px}
+.preview-sub{font-size:13px;color:var(--muted);margin:0 0 14px}
+.qr-stage{width:min(100%,300px);min-height:270px;display:grid;place-items:center;padding:14px;border:1px dashed #a9cbb3;
+  border-radius:23px;background:#fff}
+.placeholder{color:var(--muted);font-size:14px;line-height:1.8;padding:20px}
+.placeholder-icon{font-size:48px;display:block;margin-bottom:8px}
+#qrOutput{display:none;width:100%;max-width:256px;aspect-ratio:1;background:#fff}
+#qrOutput svg{display:block;width:100%;height:auto;shape-rendering:crispEdges}
+.qr-caption{max-width:100%;overflow-wrap:anywhere;font-size:12px;color:var(--soft-ink);margin:12px 0 0}
+.downloads{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin-top:14px}
+.downloads .btn{min-height:40px;padding:9px 14px;font-size:13px}
+.downloads[hidden]{display:none}
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:13px}
+.step{padding:17px;border-radius:21px;background:#ffffffc9;border:1px solid #ffffff}
+.step-num{width:34px;height:34px;border-radius:12px;display:grid;place-items:center;color:#fff;font-weight:950;
+  background:linear-gradient(135deg,var(--primary-dark),var(--primary));margin-bottom:10px}
+.step b{display:block;margin-bottom:5px}
+.step p{margin:0;color:var(--soft-ink);font-size:13px;line-height:1.7}
+.footer{text-align:center;color:var(--muted);font-size:12px;padding:8px 10px 0;line-height:1.8}
+@media(max-width:850px){.hero{grid-template-columns:1fr}.hero-card{min-height:260px}.workspace{grid-template-columns:1fr}.preview-panel{min-height:360px}}
+@media(max-width:620px){
+  .container{width:calc(100% - 20px);padding-top:14px}.topbar{border-radius:22px;padding:11px 13px}
+  .nav{display:none}.hero-card{min-height:0;border-radius:27px}.section{padding:17px;border-radius:27px}
+  .section h2{font-size:21px}.form-panel,.preview-panel{padding:15px}.steps{grid-template-columns:1fr}
+  .actions .btn{flex:1 1 100%}.qr-stage{min-height:250px}
+}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;transition:none!important}}
+</style>
+</head>
+<body>
+<main class="container">
+  <nav class="topbar" aria-label="主要導覽">
+    <div class="brand"><div class="logo">⌗</div><span>森林 QR 小工具</span></div>
+    <div class="nav"><a href="#generator">開始製作</a><a href="#guide">使用說明</a></div>
+  </nav>
+
+  <section class="hero">
+    <div class="hero-card">
+      <div class="hero-content">
+        <div class="eyebrow">🌲 FOREST LINK LAB</div>
+        <h1>把網址變成<br><span class="accent">QR Code！</span></h1>
+        <p>貼上想分享的網址，快速產生專屬 QR Code。掃描就能開啟網頁，方便分享活動、教材、表單或作品。</p>
+      </div>
+    </div>
+    <aside class="hero-side">
+      <div class="info-card">
+        <h2>🦊 一鍵生成，輕鬆分享</h2>
+        <p>輸入網址後即可建立 QR Code，並可下載圖片，放進簡報、講義或海報。</p>
+        <div class="tip"><div class="tip-icon">🔒</div><div><b>資料留在你的裝置</b><p>本工具在瀏覽器本機產生 QR Code，不會把輸入的網址傳到外部網站。</p></div></div>
+      </div>
+      <div class="info-card">
+        <h2>🍃 使用小提醒</h2>
+        <p>請輸入完整網址，例如 https://example.com。下載後，建議先用手機相機掃描測試，再分享給其他人。</p>
+      </div>
+    </aside>
+  </section>
+
+  <section id="generator" class="section">
+    <div class="section-head">
+      <div><h2>一、網址 QR 產生器</h2><p class="section-desc">貼上網址，按下按鈕，就能建立可下載的 QR Code。</p></div>
+    </div>
+    <div class="workspace">
+      <div class="form-panel">
+        <label class="field-label" for="urlInput">🔗 請輸入要轉換的網址</label>
+        <input class="url-input" id="urlInput" type="url" inputmode="url" autocomplete="url"
+          placeholder="https://example.com" aria-describedby="urlHint" maxlength="800">
+        <p class="hint" id="urlHint">請使用完整的 http:// 或 https:// 網址。支援一般常見網址長度；網址越長，QR 圖案會越密集。</p>
+        <div class="actions">
+          <button class="btn" id="generateBtn" type="button">🌟 產生 QR Code</button>
+          <button class="btn secondary" id="clearBtn" type="button">清除內容</button>
+        </div>
+        <div id="message" class="message" role="status" aria-live="polite"></div>
+      </div>
+      <div class="preview-panel">
+        <p class="preview-title">📱 QR Code 預覽</p>
+        <p class="preview-sub">生成後會顯示在這裡</p>
+        <div class="qr-stage">
+          <div class="placeholder" id="placeholder"><span class="placeholder-icon">🌿</span>等待輸入網址<br>你的 QR Code 即將出現！</div>
+          <div id="qrOutput" aria-label="產生的 QR Code"></div>
+        </div>
+        <p class="qr-caption" id="qrCaption">尚未產生 QR Code</p>
+        <div class="downloads" id="downloadActions" hidden>
+          <button class="btn" id="pngBtn" type="button">⬇️ 下載 PNG</button>
+          <button class="btn secondary" id="svgBtn" type="button">下載 SVG</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="guide" class="section">
+    <div class="section-head"><div><h2>二、三步驟完成分享</h2><p class="section-desc">操作簡單，第一次使用也能快速上手。</p></div></div>
+    <div class="steps">
+      <div class="step"><div class="step-num">1</div><b>貼上網址</b><p>複製完整網址，貼到左側輸入欄位。</p></div>
+      <div class="step"><div class="step-num">2</div><b>產生圖碼</b><p>點選「產生 QR Code」，右側就會顯示圖案。</p></div>
+      <div class="step"><div class="step-num">3</div><b>下載與掃描</b><p>下載 PNG 或 SVG，先用手機掃描確認連結正確。</p></div>
+    </div>
+  </section>
+  <footer class="footer">離線單檔工具・不需登入・不會上傳輸入網址<br>建議使用 PNG 放入一般文件；需要放大印刷時可選 SVG。</footer>
+</main>
+
+<script>
+"use strict";
+
+/* QR Code 核心：採用 byte mode、L 級錯誤修正，支援 QR Version 1～6。 */
+const QR = (() => {
+  const ECC_PER_BLOCK = [0,7,10,15,20,26,18];
+  const BLOCKS = [0,1,1,1,1,1,2];
+  const DATA_CODEWORDS = [0,19,34,55,80,108,136];
+  const ALIGNMENT = [[],[],[6,18],[6,22],[6,26],[6,30],[6,34]];
+
+  function utf8Bytes(str){
+    return Array.from(new TextEncoder().encode(str));
+  }
+  function appendBits(bits,value,length){
+    for(let i=length-1;i>=0;i--) bits.push((value >>> i)&1);
+  }
+  function makeData(bytes,version){
+    const capacity=DATA_CODEWORDS[version]*8;
+    const bits=[];
+    appendBits(bits,0b0100,4);
+    appendBits(bits,bytes.length,8);
+    for(const b of bytes) appendBits(bits,b,8);
+    if(bits.length>capacity) throw new Error("URL_TOO_LONG");
+    appendBits(bits,0,Math.min(4,capacity-bits.length));
+    while(bits.length%8) bits.push(0);
+    const data=[];
+    for(let i=0;i<bits.length;i+=8){
+      let value=0;for(let j=0;j<8;j++) value=(value<<1)|bits[i+j];
+      data.push(value);
+    }
+    for(let pad=0;data.length<DATA_CODEWORDS[version];pad++) data.push(pad%2===0?0xEC:0x11);
+    return data;
+  }
+  function gfMultiply(x,y){
+    let z=0;
+    for(let i=7;i>=0;i--){
+      z=(z<<1)^((z>>>7)*0x11D);
+      z^=((y>>>i)&1)*x;
+    }
+    return z;
+  }
+  function reedSolomonDivisor(degree){
+    const result=Array(degree).fill(0);result[degree-1]=1;
+    let root=1;
+    for(let i=0;i<degree;i++){
+      for(let j=0;j<degree;j++){
+        result[j]=gfMultiply(result[j],root);
+        if(j+1<degree) result[j]^=result[j+1];
+      }
+      root=gfMultiply(root,2);
+    }
+    return result;
+  }
+  function reedSolomonRemainder(data,divisor){
+    const result=Array(divisor.length).fill(0);
+    for(const b of data){
+      const factor=b^result.shift();result.push(0);
+      for(let i=0;i<result.length;i++) result[i]^=gfMultiply(divisor[i],factor);
+    }
+    return result;
+  }
+  function addErrorCorrection(data,version){
+    const blockCount=BLOCKS[version],eccLen=ECC_PER_BLOCK[version];
+    const raw=version===1?26:version===2?44:version===3?70:version===4?100:version===5?134:172;
+    const shortBlockLen=Math.floor(raw/blockCount);
+    const shortBlocks=blockCount-(raw%blockCount);
+    const shortDataLen=Math.floor(DATA_CODEWORDS[version]/blockCount);
+    const divisor=reedSolomonDivisor(eccLen);
+    const blocks=[];let offset=0;
+    for(let i=0;i<blockCount;i++){
+      const dataLen=shortDataLen+(i>=shortBlocks?1:0);
+      const part=data.slice(offset,offset+dataLen);offset+=dataLen;
+      const ecc=reedSolomonRemainder(part,divisor);
+      blocks.push({data:part,ecc});
+    }
+    const result=[];
+    for(let i=0;i<shortDataLen+1;i++){
+      for(let j=0;j<blocks.length;j++) if(i<blocks[j].data.length) result.push(blocks[j].data[i]);
+    }
+    for(let i=0;i<eccLen;i++) for(const block of blocks) result.push(block.ecc[i]);
+    return result;
+  }
+  function bch(value,poly){
+    let v=value,degree=0,p=poly;
+    while(p){degree++;p>>>=1;}
+    degree--;
+    while((function(){let n=v;let d=-1;while(n){d++;n>>>=1;}return d;})()>=degree){
+      let d=-1,n=v;while(n){d++;n>>>=1;}
+      v^=poly<<(d-degree);
+    }
+    return v;
+  }
+  function formatBits(mask){
+    const data=(1<<3)|mask;
+    return ((data<<10)|bch(data<<10,0x537))^0x5412;
+  }
+  function penalty(m){
+    const n=m.length;let score=0;
+    for(let y=0;y<n;y++){
+      let runColor=m[y][0],run=1;
+      for(let x=1;x<n;x++){
+        if(m[y][x]===runColor){run++;if(run===5)score+=3;else if(run>5)score++;}
+        else{runColor=m[y][x];run=1;}
+      }
+    }
+    for(let x=0;x<n;x++){
+      let runColor=m[0][x],run=1;
+      for(let y=1;y<n;y++){
+        if(m[y][x]===runColor){run++;if(run===5)score+=3;else if(run>5)score++;}
+        else{runColor=m[y][x];run=1;}
+      }
+    }
+    for(let y=0;y<n-1;y++) for(let x=0;x<n-1;x++){
+      const c=m[y][x];if(c===m[y][x+1]&&c===m[y+1][x]&&c===m[y+1][x+1])score+=3;
+    }
+    const pattern=[1,0,1,1,1,0,1];
+    for(let y=0;y<n;y++) for(let x=0;x<=n-7;x++){
+      if(pattern.every((v,i)=>m[y][x+i]===v)){
+        const left=x>=4&&m[y].slice(x-4,x).every(v=>v===0);
+        const right=x+11<=n&&m[y].slice(x+7,x+11).every(v=>v===0);
+        if(left||right)score+=40;
+      }
+    }
+    for(let x=0;x<n;x++) for(let y=0;y<=n-7;y++){
+      if(pattern.every((v,i)=>m[y+i][x]===v)){
+        const top=y>=4&&m.slice(y-4,y).every(row=>row[x]===0);
+        const bottom=y+11<=n&&m.slice(y+7,y+11).every(row=>row[x]===0);
+        if(top||bottom)score+=40;
+      }
+    }
+    let dark=0;for(const row of m)for(const v of row)dark+=v;
+    score+=Math.floor(Math.abs(dark*100/(n*n)-50)/5)*10;
+    return score;
+  }
+  function buildMatrix(codewords,version,mask){
+    const size=version*4+17;
+    const m=Array.from({length:size},()=>Array(size).fill(null));
+    const set=(x,y,v)=>{if(x>=0&&y>=0&&x<size&&y<size)m[y][x]=v?1:0;};
+    function finder(cx,cy){
+      for(let dy=-1;dy<=7;dy++)for(let dx=-1;dx<=7;dx++){
+        const x=cx+dx,y=cy+dy;
+        if(x<0||y<0||x>=size||y>=size)continue;
+        const inside=dx>=0&&dx<=6&&dy>=0&&dy<=6;
+        const black=inside&&(dx===0||dx===6||dy===0||dy===6||(dx>=2&&dx<=4&&dy>=2&&dy<=4));
+        set(x,y,black);
+      }
+    }
+    finder(0,0);finder(size-7,0);finder(0,size-7);
+    for(let i=8;i<size-8;i++){set(i,6,i%2===0);set(6,i,i%2===0);}
+    for(const cy of ALIGNMENT[version])for(const cx of ALIGNMENT[version]){
+      if(m[cy][cx]!==null)continue;
+      for(let dy=-2;dy<=2;dy++)for(let dx=-2;dx<=2;dx++){
+        set(cx+dx,cy+dy,Math.max(Math.abs(dx),Math.abs(dy))!==1);
+      }
+    }
+    const fmt=formatBits(mask);
+    for(let i=0;i<=5;i++)set(8,i,(fmt>>>i)&1);
+    set(8,7,(fmt>>>6)&1);set(8,8,(fmt>>>7)&1);set(7,8,(fmt>>>8)&1);
+    for(let i=9;i<15;i++)set(14-i,8,(fmt>>>i)&1);
+    for(let i=0;i<8;i++)set(size-1-i,8,(fmt>>>i)&1);
+    for(let i=8;i<15;i++)set(8,size-15+i,(fmt>>>i)&1);
+    set(8,size-8,1);
+    const masks=[
+      (x,y)=>(x+y)%2===0,(x,y)=>y%2===0,(x,y)=>x%3===0,
+      (x,y)=>(x+y)%3===0,(x,y)=>(Math.floor(y/2)+Math.floor(x/3))%2===0,
+      (x,y)=>(x*y)%2+(x*y)%3===0,(x,y)=>((x*y)%2+(x*y)%3)%2===0,
+      (x,y)=>((x+y)%2+(x*y)%3)%2===0
+    ];
+    let bitIndex=0,up=true;
+    for(let right=size-1;right>=1;right-=2){
+      if(right===6)right=5;
+      for(let vert=0;vert<size;vert++){
+        const y=up?size-1-vert:vert;
+        for(let j=0;j<2;j++){
+          const x=right-j;
+          if(m[y][x]!==null)continue;
+          const bit=bitIndex<codewords.length*8?((codewords[bitIndex>>>3]>>>(7-(bitIndex&7)))&1):0;
+          bitIndex++;set(x,y,bit^(masks[mask](x,y)?1:0));
+        }
+      }
+      up=!up;
+    }
+    return m;
+  }
+  function encode(text){
+    const bytes=utf8Bytes(text);
+    if(bytes.length>134)throw new Error("URL_TOO_LONG");
+    let version=1;
+    while(version<=6 && bytes.length>([0,17,32,53,78,106,134][version]))version++;
+    if(version>6)throw new Error("URL_TOO_LONG");
+    const data=makeData(bytes,version);
+    const words=addErrorCorrection(data,version);
+    let best=null,bestScore=Infinity;
+    for(let mask=0;mask<8;mask++){
+      const candidate=buildMatrix(words,version,mask);
+      const score=penalty(candidate);
+      if(score<bestScore){bestScore=score;best=candidate;}
+    }
+    return best;
+  }
+  return {encode};
+})();
+
+/* 將矩陣轉成含靜區的 SVG，避免外部圖庫與網路依賴。 */
+let currentSvg="";
+const $=id=>document.getElementById(id);
+function makeSvg(matrix){
+  const quiet=4,size=matrix.length+quiet*2;
+  let path="";
+  for(let y=0;y<matrix.length;y++)for(let x=0;x<matrix.length;x++){
+    if(matrix[y][x])path+=`M${x+quiet} ${y+quiet}h1v1h-1z`;
+  }
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${size} ${size}" role="img" aria-label="網址 QR Code"><rect width="${size}" height="${size}" fill="#fff"/><path d="${path}" fill="#000"/></svg>`;
+}
+function showMessage(text,type){
+  const box=$("message");box.textContent=text;box.className="message "+type;
+}
+function clearMessage(){const box=$("message");box.textContent="";box.className="message";}
+function generate(){
+  const raw=$("urlInput").value.trim();
+  clearMessage();
+  if(!raw){showMessage("請先輸入網址，再按下產生按鈕。","error");$("urlInput").focus();return;}
+  let parsed;
+  try{parsed=new URL(raw);}catch(_){showMessage("網址格式似乎不正確，請確認是否輸入完整網址。","error");$("urlInput").focus();return;}
+  if(!["http:","https:"].includes(parsed.protocol)){
+    showMessage("目前只支援 http:// 或 https:// 開頭的網址。","error");$("urlInput").focus();return;
+  }
+  try{
+    const matrix=QR.encode(raw);
+    currentSvg=makeSvg(matrix);
+    $("qrOutput").innerHTML=currentSvg;
+    $("qrOutput").style.display="block";
+    $("placeholder").style.display="none";
+    $("qrCaption").textContent=`已成功產生｜${matrix.length} × ${matrix.length} 格`;
+    $("downloadActions").hidden=false;
+    showMessage("QR Code 已完成！可以下載圖片，或先用手機掃描確認。","success");
+  }catch(error){
+    if(error.message==="URL_TOO_LONG"){
+      showMessage("這個網址太長，目前單檔離線版支援 UTF-8 編碼後最多 134 bytes。請改用較短的網址或短網址。","error");
+    }else{
+      showMessage("產生時發生問題，請確認網址內容後再試一次。","error");
+      console.error(error);
+    }
+  }
+}
+function downloadSvg(){
+  if(!currentSvg)return;
+  const blob=new Blob([currentSvg],{type:"image/svg+xml;charset=utf-8"});
+  saveBlob(blob,"qr-code.svg");
+}
+function downloadPng(){
+  if(!currentSvg)return;
+  const svgBlob=new Blob([currentSvg],{type:"image/svg+xml;charset=utf-8"});
+  const url=URL.createObjectURL(svgBlob);
+  const img=new Image();
+  img.onload=()=>{
+    const canvas=document.createElement("canvas");canvas.width=1024;canvas.height=1024;
+    const ctx=canvas.getContext("2d");
+    ctx.fillStyle="#fff";ctx.fillRect(0,0,1024,1024);ctx.drawImage(img,0,0,1024,1024);
+    canvas.toBlob(blob=>{if(blob)saveBlob(blob,"qr-code.png");URL.revokeObjectURL(url);},"image/png");
+  };
+  img.onerror=()=>{URL.revokeObjectURL(url);showMessage("PNG 轉檔失敗，請改下載 SVG。","error");};
+  img.src=url;
+}
+function saveBlob(blob,filename){
+  const url=URL.createObjectURL(blob);const a=document.createElement("a");
+  a.href=url;a.download=filename;document.body.appendChild(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
+$("generateBtn").addEventListener("click",generate);
+$("urlInput").addEventListener("keydown",event=>{if(event.key==="Enter")generate();});
+$("clearBtn").addEventListener("click",()=>{
+  $("urlInput").value="";$("qrOutput").innerHTML="";$("qrOutput").style.display="none";
+  $("placeholder").style.display="block";$("qrCaption").textContent="尚未產生 QR Code";
+  $("downloadActions").hidden=true;currentSvg="";clearMessage();$("urlInput").focus();
+});
+$("pngBtn").addEventListener("click",downloadPng);
+$("svgBtn").addEventListener("click",downloadSvg);
+</script>
+</body>
+</html>
